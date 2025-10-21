@@ -9,8 +9,19 @@ import { z } from "zod";
 
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
+import { after } from "next/server";
+
+import {
+  observe,
+  updateActiveObservation,
+  updateActiveTrace,
+} from "@langfuse/tracing";
+import { trace } from "@opentelemetry/api";
+
+import { langfuseSpanProcessor } from "../../../utils/langfuse-instrumentation";
+
+
 // import { groq } from "@ai-sdk/groq";
-// import { openai } from '@ai-sdk/openai';
 // model: groq('meta-llama/llama-4-scout-17b-16e-instruct'),
 
 const lmstudio = createOpenAICompatible({
@@ -21,56 +32,87 @@ const lmstudio = createOpenAICompatible({
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-export async function POST(req: Request) {
+// export async function POST(req: Request) {
 
-  // console.log(';; GROQ_API_KEY ', process.env['GROQ_API_KEY'])
+//   const { messages }: { messages: UIMessage[] } = await req.json();
 
-  const { messages }: { messages: UIMessage[] } = await req.json();
+//   const result = streamText({
+//       // model: lmstudio('qwen/qwen3-14b'),
+//       model: lmstudio('lfm2-8b-a1b'),
+//     // model: groq("meta-llama/llama-4-scout-17b-16e-instruct"),
+//     // model: groq("qwen/qwen3-32b"),
+//     messages: convertToModelMessages(messages),
+//     // stopWhen: stepCountIs(5),
+//   });
 
-  const result = streamText({
-      // model: lmstudio('qwen/qwen3-14b'),
-      model: lmstudio('lfm2-8b-a1b'),
-    // model: groq("meta-llama/llama-4-scout-17b-16e-instruct"),
-    // model: groq("qwen/qwen3-32b"),
-    messages: convertToModelMessages(messages),
-    // stopWhen: stepCountIs(5),
-    // tools: {
-    //   weather: tool({
-    //     description: "Get the weather in a location (fahrenheit)",
-    //     inputSchema: z.object({
-    //       location: z.string().describe("The location to get the weather for"),
-    //     }),
-    //     execute: async ({ location }) => {
-    //       // Generate temperature in Fahrenheit that corresponds to 28-40°C
-    //       // 28°C = 82.4°F, 40°C = 104°F
-    //       const temperature = Math.round(Math.random() * (104 - 82) + 82);
-    //       return {
-    //         location,
-    //         temperature,
-    //       };
-    //     },
-    //   }),
-    //   convertFahrenheitToCelsius: tool({
-    //     description: "Convert a temperature in fahrenheit to celsius",
-    //     inputSchema: z.object({
-    //       temperature: z
-    //         .union([z.number(), z.string()])
-    //         .describe("The temperature in fahrenheit to convert"),
-    //     }),
-    //     execute: async ({ temperature }) => {
-    //       const tempNumber =
-    //         typeof temperature === "string"
-    //           ? parseFloat(temperature)
-    //           : temperature;
-    //       const celsius = Math.round((tempNumber - 32) * (5 / 9));
-    //       return {
-    //         fahrenheit: tempNumber,
-    //         celsius,
-    //       };
-    //     },
-    //   }),
-    // },
+//   return result.toUIMessageStreamResponse();
+// }
+
+
+const handler = async (req: Request) => {
+  const {
+    messages,
+    chatId,
+    userId,
+  }: { messages: UIMessage[]; chatId: string; userId: string } =
+    await req.json();
+
+  // Set session id and user id on active trace
+  const inputText = messages[messages.length - 1].parts.find(
+    (part) => part.type === "text"
+  )?.text;
+
+  updateActiveObservation({
+    input: inputText,
   });
 
+  updateActiveTrace({
+    name: "my-ai-sdk-trace",
+    sessionId: chatId,
+    userId,
+    input: inputText,
+  });
+
+  const result = streamText({
+    model: lmstudio('qwen/qwen3-vl-4b'),
+    messages: convertToModelMessages(messages),
+    // ... other streamText options ...
+    experimental_telemetry: {
+      isEnabled: true,
+    },
+    onFinish: async (result) => {
+      updateActiveObservation({
+        output: result.content,
+      });
+      updateActiveTrace({
+        output: result.content,
+      });
+
+      // End span manually after stream has finished
+      trace.getActiveSpan()?.end();
+    },
+    onError: async (error) => {
+      updateActiveObservation({
+        output: error,
+        level: "ERROR"
+      });
+      updateActiveTrace({
+        output: error,
+      });
+
+      // End span manually after stream has finished
+      trace.getActiveSpan()?.end();
+    },
+  });
+
+  // Important in serverless environments: schedule flush after request is finished
+  after(async () => await langfuseSpanProcessor.forceFlush());
+
   return result.toUIMessageStreamResponse();
-}
+};
+
+export const POST = observe(handler, {
+  name: "handle-chat-message",
+  // end observation _after_ stream has finished
+  endOnExit: false,
+});
