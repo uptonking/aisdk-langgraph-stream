@@ -1,18 +1,21 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { useChat } from "@ai-sdk/react";
-import { useState } from "react";
+import Image from 'next/image';
+import { useChat } from '@ai-sdk/react';
+import { useState } from 'react';
 
 export default function ChatWithGroqApi() {
-  const [input, setInput] = useState("");
-  const { messages, sendMessage } = useChat();
+  const [input, setInput] = useState('');
+  const { messages, sendMessage } = useChat({
+    // id: `${new Date().toISOString()}`,
+    // resume: true,
+  });
   // @ts-expect-error test
-  globalThis["msgg"] = messages;
+  globalThis['msgg'] = messages;
 
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center justify-center w-full">
+    <div className='font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20'>
+      <main className='flex flex-col gap-[32px] row-start-2 items-center justify-center w-full'>
         {/* <p>Go Back</p> */}
         {/* <ol className='font-mono list-inside list-decimal text-sm/6 text-center sm:text-left'>
           <li className='mb-2 tracking-[-.01em]'>
@@ -20,28 +23,28 @@ export default function ChatWithGroqApi() {
           </li>
         </ol> */}
 
-        <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+        <div className='flex flex-col w-full max-w-md py-24 mx-auto stretch'>
           {messages.map((message) => (
-            <div key={message.id} className="whitespace-pre-wrap">
-              <div className="font-bold mt-3">
-                {message.role === "user" ? "👤 User: " : "👾 AI: "}
+            <div key={message.id} className='whitespace-pre-wrap'>
+              <div className='font-bold mt-3'>
+                {message.role === 'user' ? '👤 User: ' : '👾 AI: '}
               </div>
               {message.parts.map((part, i) => {
                 switch (part.type) {
-                  case "text":
+                  case 'text':
                     return (
                       <div
-                        className="border-t border-neutral-400 mt-1.5"
+                        className='border-t border-neutral-400 mt-1.5'
                         key={`${message.id}-${i}`}
                       >
                         {part.text}
                       </div>
                     );
-                  case "tool-weather":
-                  case "tool-convertFahrenheitToCelsius":
+                  case 'tool-weather':
+                  case 'tool-convertFahrenheitToCelsius':
                     return (
                       <pre
-                        className="border-t border-indigo-400 mt-1.5"
+                        className='border-t border-indigo-400 mt-1.5'
                         key={`${message.id}-${i}`}
                       >
                         {JSON.stringify(part, null, 2)}
@@ -56,13 +59,13 @@ export default function ChatWithGroqApi() {
             onSubmit={(e) => {
               e.preventDefault();
               sendMessage({ text: input });
-              setInput("");
+              setInput('');
             }}
           >
             <input
-              className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
+              className='fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl'
               value={input}
-              placeholder="what do you want create today..."
+              placeholder='what do you want create today...'
               onChange={(e) => setInput(e.currentTarget.value)}
             />
           </form>

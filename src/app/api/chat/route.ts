@@ -74,7 +74,8 @@ const handler = async (req: Request) => {
   });
 
   const result = streamText({
-    model: lmstudio('qwen/qwen3-vl-4b'),
+    // model: lmstudio('qwen/qwen3-vl-4b'),
+    model: lmstudio('qwen/qwen3-14b'),
     messages: convertToModelMessages(messages),
     // ... other streamText options ...
     experimental_telemetry: {
