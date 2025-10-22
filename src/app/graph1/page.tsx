@@ -1,7 +1,7 @@
 'use client';
 
 import { LangGraphChatTransport } from '@/utils/langgraph-aisdk-transport';
-import { useChat } from '../../utils/aisdk-react/use-chat';
+import { useChat } from '@ai-sdk/react';
 import { useState } from 'react';
 
 const transport = new LangGraphChatTransport({

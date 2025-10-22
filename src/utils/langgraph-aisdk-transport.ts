@@ -59,17 +59,17 @@ const processTextDelta = (
   state: StreamState,
   text: string,
 ) => {
-  console.log(';; processTextDelta called:', { text, lastSeenText: state.lastSeenText, hasActiveTextBlock: state.hasActiveTextBlock });
-  
+  // console.log(';; processTextDelta called:', { text, lastSeenText: state.lastSeenText, hasActiveTextBlock: state.hasActiveTextBlock });
+
   // If this is the first text chunk, start a new text block
   if (!state.hasActiveTextBlock) {
     startTextBlock(controller, state);
   }
-  
+
   // AI SDK streaming pattern: maintain a single text block for the entire response
   // Only send incremental differences as text-delta
   let delta = '';
-  
+
   if (state.lastSeenText === '') {
     // First chunk - send the full text
     delta = text;
@@ -81,7 +81,7 @@ const processTextDelta = (
     // Just send the entire text as delta (LangGraph sends full content each time)
     delta = text;
   }
-  
+
   // Only send delta if there's new content
   if (delta.length > 0) {
     controller.enqueue({
@@ -90,7 +90,7 @@ const processTextDelta = (
       delta: delta,
     });
     state.lastSeenText = text;
-    console.log(';; Enqueued text-delta:', delta);
+    // console.log(';; Enqueued text-delta:', delta);
   }
 };
 
@@ -117,6 +117,12 @@ const processToolUse = (
     toolName: item.name,
     input,
   });
+
+  // TODO: Enhance tool-use processing for better AI SDK integration
+  // - Handle tool call state management
+  // - Support for multiple concurrent tool calls
+  // - Error handling for tool execution
+  // console.log(';; TODO: Enhanced tool-use processing needed');
 };
 
 const processToolOutput = (
@@ -128,6 +134,12 @@ const processToolOutput = (
     toolCallId: toolMessage.tool_call_id,
     output: toolMessage.content,
   });
+
+  // TODO: Enhance tool-output processing for better AI SDK integration
+  // - Validate tool call ID exists in state
+  // - Handle tool result formatting
+  // - Support for partial tool outputs
+  // console.log(';; TODO: Enhanced tool-output processing needed');
 };
 
 const processAIMessage = (
@@ -173,30 +185,35 @@ const processDataChunk = (
   state: StreamState,
   data: unknown,
 ) => {
-  console.log(';; processDataChunk received data:', data);
-  
+  // console.log(';; processDataChunk received data:', data);
+
   if (Array.isArray(data)) {
     for (const message of data) {
-      console.log(';; Processing array message:', message);
-      
+      // console.log(';; Processing array message:', message);
+
       // Handle LangGraph AIMessageChunk format
       if (message && typeof message === 'object' && 'type' in message) {
         const msg = message as Record<string, unknown>;
-        
+
         if (msg.type === 'AIMessageChunk' && msg.content !== undefined) {
           const content = String(msg.content);
-          console.log(';; Found AIMessageChunk with content:', content);
-          
+          // console.log(';; Found AIMessageChunk with content:', content);
+
           // Simplified approach: just process the text delta
           // The processTextDelta function will handle incremental updates
           processTextDelta(controller, state, content);
         }
-        // Handle other message types if needed
+        // TODO: Add tool-use support when LangGraph sends tool calls
+        // else if (msg.type === 'tool_use' && msg.name) {
+        //   // Placeholder for tool-use processing
+        //   console.log(';; TODO: Process tool-use message:', msg);
+        // }
       }
     }
   } else if (data && typeof data === 'object') {
     const dataObj = data as Record<string, unknown>;
 
+    // TODO: Enhance tool support for different LangGraph tool message formats
     if (
       dataObj.tools &&
       typeof dataObj.tools === 'object' &&
@@ -211,6 +228,11 @@ const processDataChunk = (
     } else if (dataObj.type === 'tool' && dataObj.tool_call_id) {
       processToolOutput(controller, dataObj as LangGraphToolMessage);
     }
+    // TODO: Add support for other LangGraph message types
+    // else if (dataObj.type === 'ai' && dataObj.content) {
+    //   // Process AI messages with tool calls
+    //   processMessage(controller, state, dataObj as LangGraphMessage);
+    // }
   }
 };
 
@@ -227,8 +249,7 @@ export class LangGraphChatTransport<
   public processResponseStream(
     stream: ReadableStream<Uint8Array>,
   ): ReadableStream<UIMessageChunk> {
-    console.log(';; LangGraphChatTransport.processResponseStream called');
-    
+
     return new ReadableStream({
       async start(controller) {
         const decoder = new TextDecoder();
@@ -243,12 +264,12 @@ export class LangGraphChatTransport<
 
             const decoded = decoder.decode(value, { stream: true });
             // console.log(';; Received chunk:', decoded);
-            
+
             state.buffer += decoded;
             const lines = state.buffer.split('\n');
             state.buffer = lines.pop() || '';
 
-            console.log(';; Parsed lines:', lines);
+            // console.log(';; Parsed lines:', lines);
 
             for (const line of lines) {
               if (!line.startsWith('event: ') && !line.startsWith('data: '))
@@ -258,7 +279,7 @@ export class LangGraphChatTransport<
               // console.log(';; Processing SSE line:', line);
               const data = parseSSEData(line);
               if (data) {
-                console.log(';; Parsed data:', data);
+                // console.log(';; Parsed data:', data);
                 processDataChunk(controller, state, data);
               }
             }
@@ -266,7 +287,7 @@ export class LangGraphChatTransport<
 
           endTextBlock(controller, state);
         } catch (error) {
-          console.error(';; Error in processResponseStream:', error);
+          // console.error(';; Error in processResponseStream:', error);
           controller.enqueue({
             type: 'error',
             errorText: String(error),
