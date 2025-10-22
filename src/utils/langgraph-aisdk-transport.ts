@@ -59,31 +59,38 @@ const processTextDelta = (
   state: StreamState,
   text: string,
 ) => {
-  const isNewText = !text.startsWith(state.lastSeenText);
-
-  if (isNewText && state.lastSeenText.length > 0) {
-    endTextBlock(controller, state);
-    state.currentTextBlockId++;
+  console.log(';; processTextDelta called:', { text, lastSeenText: state.lastSeenText, hasActiveTextBlock: state.hasActiveTextBlock });
+  
+  // If this is the first text chunk, start a new text block
+  if (!state.hasActiveTextBlock) {
     startTextBlock(controller, state);
-
+  }
+  
+  // AI SDK streaming pattern: maintain a single text block for the entire response
+  // Only send incremental differences as text-delta
+  let delta = '';
+  
+  if (state.lastSeenText === '') {
+    // First chunk - send the full text
+    delta = text;
+  } else if (text.startsWith(state.lastSeenText)) {
+    // This is an incremental update - only send the new part
+    delta = text.slice(state.lastSeenText.length);
+  } else {
+    // Content doesn't match previous text - this is normal for LangGraph
+    // Just send the entire text as delta (LangGraph sends full content each time)
+    delta = text;
+  }
+  
+  // Only send delta if there's new content
+  if (delta.length > 0) {
     controller.enqueue({
       type: 'text-delta',
       id: `text-${state.currentTextBlockId}`,
-      delta: text,
+      delta: delta,
     });
     state.lastSeenText = text;
-  } else if (text.length > state.lastSeenText.length) {
-    if (!state.hasActiveTextBlock) {
-      startTextBlock(controller, state);
-    }
-
-    const newText = text.slice(state.lastSeenText.length);
-    controller.enqueue({
-      type: 'text-delta',
-      id: `text-${state.currentTextBlockId}`,
-      delta: newText,
-    });
-    state.lastSeenText = text;
+    console.log(';; Enqueued text-delta:', delta);
   }
 };
 
@@ -166,9 +173,26 @@ const processDataChunk = (
   state: StreamState,
   data: unknown,
 ) => {
+  console.log(';; processDataChunk received data:', data);
+  
   if (Array.isArray(data)) {
-    for (const message of data as (LangGraphMessage | LangGraphToolMessage)[]) {
-      processMessage(controller, state, message);
+    for (const message of data) {
+      console.log(';; Processing array message:', message);
+      
+      // Handle LangGraph AIMessageChunk format
+      if (message && typeof message === 'object' && 'type' in message) {
+        const msg = message as Record<string, unknown>;
+        
+        if (msg.type === 'AIMessageChunk' && msg.content !== undefined) {
+          const content = String(msg.content);
+          console.log(';; Found AIMessageChunk with content:', content);
+          
+          // Simplified approach: just process the text delta
+          // The processTextDelta function will handle incremental updates
+          processTextDelta(controller, state, content);
+        }
+        // Handle other message types if needed
+      }
     }
   } else if (data && typeof data === 'object') {
     const dataObj = data as Record<string, unknown>;
@@ -203,6 +227,8 @@ export class LangGraphChatTransport<
   public processResponseStream(
     stream: ReadableStream<Uint8Array>,
   ): ReadableStream<UIMessageChunk> {
+    console.log(';; LangGraphChatTransport.processResponseStream called');
+    
     return new ReadableStream({
       async start(controller) {
         const decoder = new TextDecoder();
@@ -215,19 +241,24 @@ export class LangGraphChatTransport<
             const { done, value } = await reader.read();
             if (done) break;
 
-            state.buffer += decoder.decode(value, { stream: true });
+            const decoded = decoder.decode(value, { stream: true });
+            // console.log(';; Received chunk:', decoded);
+            
+            state.buffer += decoded;
             const lines = state.buffer.split('\n');
             state.buffer = lines.pop() || '';
 
-            // console.log(';; graph-http ', value, state.buffer)
+            console.log(';; Parsed lines:', lines);
 
             for (const line of lines) {
               if (!line.startsWith('event: ') && !line.startsWith('data: '))
                 continue;
               if (line.startsWith('event: ')) continue;
 
+              // console.log(';; Processing SSE line:', line);
               const data = parseSSEData(line);
               if (data) {
+                console.log(';; Parsed data:', data);
                 processDataChunk(controller, state, data);
               }
             }
@@ -235,6 +266,7 @@ export class LangGraphChatTransport<
 
           endTextBlock(controller, state);
         } catch (error) {
+          console.error(';; Error in processResponseStream:', error);
           controller.enqueue({
             type: 'error',
             errorText: String(error),

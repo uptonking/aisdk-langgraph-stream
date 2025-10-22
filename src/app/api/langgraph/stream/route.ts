@@ -13,7 +13,7 @@ export async function POST(request: Request) {
         "messages": [
           {
             "role": "human",
-            "content": "count from zz1 to zz10, every item on a separate line  /no_think ?"
+            "content": "count from zz1 to zz5, every item on a separate line  /no_think "
           }
         ]
       },
