@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE Example</title>
+</head>
+
+<body>
+    <h1>Server-Sent Events</h1>
+    <ul id="events"></ul>
+
+    <script>
+        const appendToList = (data) => {
+            const li = document.createElement("li");
+            li.textContent = data;
+            document.getElementById("events").appendChild(li);
+        };
+
+        // Initialize the EventSource, listening for server updates
+        const eventSource = new EventSource('http://localhost:9000/events');
+        globalThis['esr'] = eventSource;
+
+        // Listen for messages from the server
+        eventSource.onmessage = (event) => {
+            const newElement = document.createElement("li");
+            newElement.textContent = '[onmsg] ' + event.data;
+            document.getElementById("events").appendChild(newElement);
+        };
+
+        eventSource.addEventListener("CustomEvent", (event) => {
+            appendToList('[custom] ' + JSON.parse(event.data).time);
+        });
+
+        // Close事件的处理
+        eventSource.addEventListener("Close", (event) => {
+            appendToList(event.data);
+            eventSource.close();
+            // 👀 需要定期重启服务端，否则readState的状态有时会异常
+            window.setTimeout(() => console.log('es.readyState ', eventSource.readyState), 2000)
+        });
+
+        // Log connection error
+        eventSource.onerror = function (event) {
+            console.log('Error occurred:', event);
+        };
+    </script>
+</body>
+
+</html>
