@@ -4,8 +4,8 @@ import {
   convertToModelMessages,
   tool,
   stepCountIs,
-} from "ai";
-import { z } from "zod";
+} from 'ai';
+import { z } from 'zod';
 
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
@@ -22,12 +22,10 @@ const lmstudio = createOpenAICompatible({
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-
   // console.log(';; GROQ_API_KEY ', process.env['GROQ_API_KEY'])
 
   const { messages }: { messages: UIMessage[] } = await req.json();
   // console.log(';; req messages ', JSON.stringify(messages, null, 3));
-
 
   const result = streamText({
     model: lmstudio('qwen/qwen3-vl-4b'),

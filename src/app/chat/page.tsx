@@ -18,7 +18,9 @@ export default function ChatWithAi() {
 
   return (
     <div className='font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20'>
-      <h2 className='text-2xl font-bold text-teal-800'>Chat with AI</h2>
+      <div className=''>
+        <h2 className='text-2xl font-bold text-teal-500 '>Chat with AI</h2>
+      </div>
       <main className='flex flex-col gap-[32px] row-start-2 items-center justify-center w-full'>
         {/* <p>Go Back</p> */}
         {/* <ol className='font-mono list-inside list-decimal text-sm/6 text-center sm:text-left'>
@@ -28,52 +30,54 @@ export default function ChatWithAi() {
         </ol> */}
 
         <div className='flex flex-col w-full max-w-md py-24 mx-auto stretch'>
-          {/* {messages.map((message) => (
-            <div key={message.id} className='whitespace-pre-wrap'>
-              <div className='font-bold mt-3'>
-                {message.role === 'user' ? '👤 User: ' : '👾 AI: '}
+          <div className='markdown-content'>
+            {messages.map((message) => (
+              <div key={message.id} className='whitespace-pre-wrap'>
+                <div className='font-bold mt-3'>
+                  {message.role === 'user' ? '👤 User: ' : '👾 AI: '}
+                </div>
+                {message.parts.map((part, i) => {
+                  switch (part.type) {
+                    case 'text':
+                      return (
+                        <div
+                          className='border-t border-neutral-400 mt-1.5'
+                          key={`${message.id}-${i}`}
+                        >
+                          {part.text}
+                        </div>
+                      );
+                    case 'tool-weather':
+                    case 'tool-convertFahrenheitToCelsius':
+                      return (
+                        <pre
+                          className='border-t border-indigo-400 mt-1.5'
+                          key={`${message.id}-${i}`}
+                        >
+                          {JSON.stringify(part, null, 2)}
+                        </pre>
+                      );
+                  }
+                })}
               </div>
-              {message.parts.map((part, i) => {
-                switch (part.type) {
-                  case 'text':
-                    return (
-                      <div
-                        className='border-t border-neutral-400 mt-1.5'
-                        key={`${message.id}-${i}`}
-                      >
-                        {part.text}
-                      </div>
-                    );
-                  case 'tool-weather':
-                  case 'tool-convertFahrenheitToCelsius':
-                    return (
-                      <pre
-                        className='border-t border-indigo-400 mt-1.5'
-                        key={`${message.id}-${i}`}
-                      >
-                        {JSON.stringify(part, null, 2)}
-                      </pre>
-                    );
-                }
-              })}
-            </div>
-          ))} */}
+            ))}
 
-          {messages.map((message) => (
-            <div key={message.id}>
-              {message.parts
-                .filter((part) => part.type === 'text')
-                .map((part, index) => (
-                  <Streamdown
-                    isAnimating={status === 'streaming'}
-                    className='prose prose-neutral dark:prose-invert max-w-none'
-                    key={index}
-                  >
-                    {part.text}
-                  </Streamdown>
-                ))}
-            </div>
-          ))}
+            {messages.map((message) => (
+              <div key={message.id}>
+                {message.parts
+                  .filter((part) => part.type === 'text')
+                  .map((part, index) => (
+                    <Streamdown
+                      isAnimating={status === 'streaming'}
+                      className='prose prose-neutral dark:prose-invert max-w-none'
+                      key={index}
+                    >
+                      {part.text}
+                    </Streamdown>
+                  ))}
+              </div>
+            ))}
+          </div>
 
           <form
             onSubmit={(e) => {
