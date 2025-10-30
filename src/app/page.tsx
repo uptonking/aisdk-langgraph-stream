@@ -26,10 +26,10 @@ export default function Home() {
           </li> */}
           <li className="tracking-[-.01em]">
             <Link
-              href="/groq"
+              href="/chat"
               className="text-blue-600 dark:text-blue-400 hover:underline"
             >
-              Try to chat with Groq AI
+              Try to chat with AI(OpenAI-compatible, like Groq...)
             </Link>
           </li>
         </ol>

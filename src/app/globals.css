@@ -1,8 +1,17 @@
+
+
 @import "tailwindcss";
+
+@source "../../node_modules/streamdown/dist/index.js";
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* 为 Streamdown 使用的主题令牌补充基础变量 */
+  --border: #e5e7eb; /* 灰色-200 */
+  --muted: #f5f5f5; /* 灰色-100 */
+  --muted-foreground: #6b7280; /* 灰色-500 */
 }
 
 @theme inline {

@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
 
   const result = streamText({
-    model: lmstudio('qwen/qwen3-14b'),
+    model: lmstudio('qwen/qwen3-vl-4b'),
     // model: lmstudio('lfm2-8b-a1b'),
     // model: groq("meta-llama/llama-4-scout-17b-16e-instruct"),
     // model: groq("qwen/qwen3-32b"),
