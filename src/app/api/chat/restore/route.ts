@@ -1,12 +1,4 @@
-import {
-  streamText,
-  UIMessage,
-  convertToModelMessages,
-  tool,
-  stepCountIs,
-  createIdGenerator,
-} from 'ai';
-import { z } from 'zod';
+import { streamText, convertToModelMessages, createIdGenerator } from 'ai';
 
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { saveChat } from '@/utils/chat-store';
@@ -26,13 +18,11 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const { messages, id: chatId }: { messages: MyUIMessage[]; id: string } =
     await req.json();
-  // console.log(';; req messages ', chatId, JSON.stringify(messages, null, 3));
+  console.log(';; req messages ', chatId, JSON.stringify(messages, null, 3));
 
   const result = streamText({
     model: lmstudio('qwen/qwen3-vl-4b'),
-    // model: lmstudio('lfm2-8b-a1b'),
     // model: groq("meta-llama/llama-4-scout-17b-16e-instruct"),
-    // model: groq("qwen/qwen3-32b"),
     messages: convertToModelMessages(messages),
   });
 
@@ -45,7 +35,7 @@ export async function POST(req: Request) {
     // Generate consistent server-side IDs for persistence:
     generateMessageId: createIdGenerator({
       prefix: 'msg',
-      size: 16,
+      size: 6,
     }),
   });
 }

@@ -25,10 +25,10 @@ export default function Home() {
           </li>
           <li className='tracking-[-.01em]'>
             <Link
-              href='/chat'
+              href='/chat-restore'
               className='text-blue-600 hover:underline dark:text-blue-400'
             >
-              Chat persistence with local file
+              Chat persistence and restoring with local files
             </Link>
           </li>
         </ol>

@@ -14,14 +14,14 @@ export default function ChatWithAi() {
   // @ts-expect-error test
   globalThis['msgg'] = messages;
 
-  // console.log(';; msg ', messages);
+  // console.log(';; pps ', messages);
 
   return (
-    <div className='font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20'>
+    <div className='grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-sans sm:p-20'>
       <div className=''>
-        <h2 className='text-2xl font-bold text-teal-500 '>Chat with AI</h2>
+        <h2 className='text-2xl font-bold text-teal-500'>Chat with AI</h2>
       </div>
-      <main className='flex flex-col gap-[32px] row-start-2 items-center justify-center w-full'>
+      <main className='row-start-2 flex w-full flex-col items-center justify-center gap-[32px]'>
         {/* <p>Go Back</p> */}
         {/* <ol className='font-mono list-inside list-decimal text-sm/6 text-center sm:text-left'>
           <li className='mb-2 tracking-[-.01em]'>
@@ -29,17 +29,17 @@ export default function ChatWithAi() {
           </li>
         </ol> */}
 
-        <div className='flex flex-col w-full max-w-6xl py-24 mx-auto stretch'>
+        <div className='stretch mx-auto flex w-full max-w-6xl flex-col py-24'>
           {/* 水平布局容器，用于并排显示两个聊天视图 */}
-          <div className='flex gap-8 w-full'>
+          <div className='flex w-full gap-8'>
             {/* 左侧：原始消息视图 */}
-            <div className='flex-1 markdown-content'>
-              <h3 className='text-lg font-semibold mb-4 text-blue-600'>
+            <div className='markdown-content flex-1'>
+              <h3 className='mb-4 text-lg font-semibold text-blue-600'>
                 原始消息视图 (仅文本)
               </h3>
               {messages.map((message) => (
                 <div key={message.id} className='whitespace-pre-wrap'>
-                  <div className='font-bold mt-3'>
+                  <div className='mt-3 font-bold'>
                     {message.role === 'user' ? '👤 User: ' : '👾 AI: '}
                   </div>
                   {message.parts.map((part, i) => {
@@ -47,7 +47,7 @@ export default function ChatWithAi() {
                       case 'text':
                         return (
                           <div
-                            className='border-t border-neutral-400 mt-1.5'
+                            className='mt-1.5 border-t border-neutral-400'
                             key={`${message.id}-${i}`}
                           >
                             {part.text}
@@ -57,7 +57,7 @@ export default function ChatWithAi() {
                       case 'tool-convertFahrenheitToCelsius':
                         return (
                           <pre
-                            className='border-t border-indigo-400 mt-1.5'
+                            className='mt-1.5 border-t border-indigo-400'
                             key={`${message.id}-${i}`}
                           >
                             {JSON.stringify(part, null, 2)}
@@ -70,8 +70,8 @@ export default function ChatWithAi() {
             </div>
 
             {/* 右侧：Streamdown 视图 */}
-            <div className='flex-1 markdown-content'>
-              <h3 className='text-lg font-semibold mb-4 text-green-600'>
+            <div className='markdown-content flex-1'>
+              <h3 className='mb-4 text-lg font-semibold text-green-600'>
                 Streamdown 视图 (code/table/mermaid)
               </h3>
               {messages.map((message) => (
@@ -81,7 +81,7 @@ export default function ChatWithAi() {
                     .map((part, index) => (
                       <Streamdown
                         isAnimating={status === 'streaming'}
-                        className='prose prose-neutral dark:prose-invert max-w-none'
+                        className='prose max-w-none prose-neutral dark:prose-invert'
                         key={index}
                       >
                         {part.text}
@@ -100,7 +100,7 @@ export default function ChatWithAi() {
             }}
           >
             <input
-              className='fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl'
+              className='fixed bottom-0 mb-8 w-full max-w-md rounded border border-zinc-300 p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900'
               value={input}
               placeholder='what do you want create today...'
               onChange={(e) => setInput(e.currentTarget.value)}
