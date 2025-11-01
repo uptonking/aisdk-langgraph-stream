@@ -31,6 +31,14 @@ export default function Home() {
               Chat persistence and restoring with local files
             </Link>
           </li>
+          <li className='tracking-[-.01em]'>
+            <Link
+              href='/chat-resume'
+              className='text-blue-600 hover:underline dark:text-blue-400'
+            >
+              Chat resume on page reloading
+            </Link>
+          </li>
         </ol>
 
         {/* <div className="flex gap-4 items-center flex-col sm:flex-row">

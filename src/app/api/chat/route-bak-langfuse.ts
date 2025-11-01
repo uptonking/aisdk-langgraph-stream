@@ -1,25 +1,17 @@
-import {
-  streamText,
-  UIMessage,
-  convertToModelMessages,
-  tool,
-  stepCountIs,
-} from "ai";
-import { z } from "zod";
+import { streamText, UIMessage, convertToModelMessages } from 'ai';
 
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
-import { after } from "next/server";
+import { after } from 'next/server';
 
 import {
   observe,
   updateActiveObservation,
   updateActiveTrace,
-} from "@langfuse/tracing";
-import { trace } from "@opentelemetry/api";
+} from '@langfuse/tracing';
+import { trace } from '@opentelemetry/api';
 
-import { langfuseSpanProcessor } from "../../../utils/langfuse-instrumentation";
-
+import { langfuseSpanProcessor } from '../../../utils/langfuse-instrumentation';
 
 // import { groq } from "@ai-sdk/groq";
 // model: groq('meta-llama/llama-4-scout-17b-16e-instruct'),
@@ -48,7 +40,6 @@ export const maxDuration = 30;
 //   return result.toUIMessageStreamResponse();
 // }
 
-
 const handler = async (req: Request) => {
   const {
     messages,
@@ -59,7 +50,7 @@ const handler = async (req: Request) => {
 
   // Set session id and user id on active trace
   const inputText = messages[messages.length - 1].parts.find(
-    (part) => part.type === "text"
+    (part) => part.type === 'text',
   )?.text;
 
   updateActiveObservation({
@@ -67,7 +58,7 @@ const handler = async (req: Request) => {
   });
 
   updateActiveTrace({
-    name: "my-ai-sdk-trace",
+    name: 'my-ai-sdk-trace',
     sessionId: chatId,
     userId,
     input: inputText,
@@ -95,7 +86,7 @@ const handler = async (req: Request) => {
     onError: async (error) => {
       updateActiveObservation({
         output: error,
-        level: "ERROR"
+        level: 'ERROR',
       });
       updateActiveTrace({
         output: error,
@@ -113,7 +104,7 @@ const handler = async (req: Request) => {
 };
 
 export const POST = observe(handler, {
-  name: "handle-chat-message",
+  name: 'handle-chat-message',
   // end observation _after_ stream has finished
   endOnExit: false,
 });
