@@ -26,6 +26,8 @@ export async function GET(
     waitUntil: after,
   });
 
+  console.log(';; stream-resume ', chat.activeStreamId);
+
   return new Response(
     await streamContext.resumeExistingStream(chat.activeStreamId),
     { headers: UI_MESSAGE_STREAM_HEADERS },

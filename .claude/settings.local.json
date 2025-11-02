@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(redis-cli:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

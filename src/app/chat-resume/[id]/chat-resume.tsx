@@ -3,6 +3,7 @@
 import { UIMessage, useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useState } from 'react';
+import { Streamdown } from 'streamdown';
 
 export function ChatUiResume({
   id,
@@ -50,12 +51,28 @@ export function ChatUiResume({
 
   return (
     <div>
-      {messages.map((m) => (
-        <div key={m.id}>
-          {m.role === 'user' ? '👤 User: ' : '👾 AI: '}
-          {m.parts
-            .map((part) => (part.type === 'text' ? part.text : ''))
-            .join('')}
+      {messages.map((message) => (
+        <div key={message.id}>
+          <div className='mt-2'>
+            {message.role === 'user' ? '👤 User: ' : '👾 AI: '}
+          </div>
+          {
+            // message.parts
+            //   .map((part) => (part.type === 'text' ? part.text : ''))
+            //   .join('')
+
+            message.parts
+              .filter((part) => part.type === 'text')
+              .map((part, index) => (
+                <Streamdown
+                  // isAnimating={status === 'streaming'}
+                  className='prose max-w-none prose-neutral dark:prose-invert'
+                  key={index}
+                >
+                  {part.text}
+                </Streamdown>
+              ))
+          }
         </div>
       ))}
 

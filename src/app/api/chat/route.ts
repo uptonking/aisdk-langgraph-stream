@@ -27,18 +27,21 @@ const lmstudio = createOpenAICompatible({
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const {
-    messages: messagesLatest,
-    id: chatId,
-  }: { messages: MyUIMessage[]; id: string } = await req.json();
+  const { message, id: chatId }: { message: MyUIMessage; id: string } =
+    await req.json();
   const chat = await readChat(chatId);
   let messages = chat.messages;
 
-  messages = [...messages, ...messagesLatest];
+  messages = [...messages, message];
   // Clear any previous active stream and save the user message
   saveChat({ id: chatId, messages, activeStreamId: null });
 
-  // console.log(';; req messages ', chatId, JSON.stringify(messages, null, 3));
+  console.log(
+    ';; req messages ',
+    chatId,
+    JSON.stringify(message, null, 3),
+    //  JSON.stringify(messages, null, 3),
+  );
 
   const result = streamText({
     model: lmstudio('qwen/qwen3-vl-4b'),
@@ -51,7 +54,7 @@ export async function POST(req: Request) {
   return result.toUIMessageStreamResponse({
     originalMessages: messages,
     onFinish: ({ messages }) => {
-      // console.log(';; onFin ', chatId, JSON.stringify(messages, null, 2));
+      console.log('\n\n;; onFin ', chatId, JSON.stringify(messages, null, 2));
       saveChat({ id: chatId, messages, activeStreamId: null });
     },
     // Generate consistent server-side IDs for persistence:
@@ -60,16 +63,17 @@ export async function POST(req: Request) {
       size: 9,
     }),
 
-    //
+    // creates a resumable stream with a unique ID and stores it in Redis through the resumable-stream package
     async consumeSseStream({ stream }) {
       // const streamId = generateId();
       const streamId = createIdGenerator({
-        prefix: 'msg',
+        prefix: 'msgstream',
         size: 9,
       })();
 
       const streamContext = createResumableStreamContext({ waitUntil: after });
-      
+
+      console.log(';; streamId-created-at-sse ', streamId);
       // Create a resumable stream from the SSE stream
       await streamContext.createNewResumableStream(streamId, () => stream);
 
